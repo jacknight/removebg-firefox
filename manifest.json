@@ -1,0 +1,31 @@
+{
+  "manifest_version": 2,
+  "name": "Remove.bg",
+  "version": "0.1.0",
+  "description": "Right click and Save wth Background Removed",
+  "icons": {
+    "48": "icons/removebg-firefox-48.png"
+  },
+
+  "permissions": ["contextMenus", "storage", "notifications"],
+
+  "background": {
+    "scripts": ["removebg-firefox.js"]
+  },
+
+  "options_ui": {
+    "page": "options.html",
+    "browser_style": true
+  },
+
+  "browser_action": {
+    "default_popup": "options.html"
+  },
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "remove-bg@im-at.work",
+      "strict_min_version": "42.0"
+    }
+  }
+}
