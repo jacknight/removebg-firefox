@@ -1,1 +1,1 @@
-{ "typeAcquisition": { "include": ["firefox-webext-browser"] } }
+{ "typeAcquisition": { "include": ["chrome"] } }

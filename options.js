@@ -1,15 +1,14 @@
 const saveOptions = async (e) => {
   e.preventDefault();
   const apiKey = document.getElementById("apikey").value || "";
-  browser.storage.local.set({
+  chrome.storage.local.set({
     removebgapikey: apiKey,
   });
-  browser.runtime.reload();
+  chrome.runtime.reload();
 };
 
 const restoreOptions = async () => {
-  const apiKey = (await browser.storage.local.get("removebgapikey"))
-    .removebgapikey;
+  const apiKey = (await chrome.storage.local.get("removebgapikey")).removebgapikey;
   console.log(apiKey);
   document.getElementById("apikey").value = apiKey || "";
 };

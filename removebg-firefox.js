@@ -1,3 +1,12 @@
+// https://stackoverflow.com/questions/18650168/convert-blob-to-base64
+const blobToBase64 = (blob) => {
+  return new Promise((resolve, _) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result.substring(reader.result.indexOf(",") + 1));
+    reader.readAsDataURL(blob);
+  });
+};
+
 const onClick = async (url, quality, apiKey) => {
   const formData = new FormData();
   formData.append("image_url", url);
@@ -13,21 +22,17 @@ const onClick = async (url, quality, apiKey) => {
 
     if (resp.status === 200) {
       const blob = new Blob([await resp.blob()]);
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.setAttribute(
-        "download",
-        `removebg_${quality}_${url.split("/").pop()}`
-      );
-      document.body.appendChild(link);
-      link.click();
-      link.parentNode.removeChild(link);
-      window.URL.revokeObjectURL(blobUrl);
+      const urlObj = new URL(url);
+      const base64Blob = await blobToBase64(blob);
+      const filename = `removebg_${quality}_${urlObj.pathname.split("/").pop()}`;
+
+      chrome.downloads.download({
+        url: "data:image/png;base64," + base64Blob,
+        filename,
+      });
     } else {
       const json = await resp.json();
-      console.log(json);
-      browser.notifications.create({
+      chrome.notifications.create({
         title: "Failed to process image",
         message: json?.errors?.[0]?.title || "Unknown error",
         type: "basic",
@@ -39,48 +44,44 @@ const onClick = async (url, quality, apiKey) => {
 };
 
 const createMenuItems = (apiKey) => {
-  browser.contextMenus.removeAll();
+  chrome.contextMenus.removeAll();
 
   if (apiKey) {
-    browser.contextMenus.create({
+    chrome.contextMenus.create({
       id: "removebg-preview",
       title: "Preview Quality (max. 0.25 megapixels)",
       contexts: ["image"],
     });
 
-    browser.contextMenus.create({
+    chrome.contextMenus.create({
       id: "removebg-hq",
       title: "High Quality (max. 25 megapixels)",
       contexts: ["image"],
     });
 
-    browser.contextMenus.onClicked.addListener(async (info) => {
+    chrome.contextMenus.onClicked.addListener(async (info) => {
       if (info.mediaType !== "image") return;
 
-      onClick(
-        info.srcUrl,
-        info.menuItemId === "removebg-hq" ? "auto" : "preview",
-        apiKey
-      );
+      onClick(info.srcUrl, info.menuItemId === "removebg-hq" ? "auto" : "preview", apiKey);
     });
   } else {
-    browser.contextMenus.create({
+    chrome.contextMenus.create({
       id: "removebg-apikey",
       title: "Remove.bg - Add API Key",
       contexts: ["image"],
     });
 
-    browser.contextMenus.onClicked.addListener((info) => {
+    chrome.contextMenus.onClicked.addListener((info) => {
       if (info.mediaType !== "image") return;
 
       if (info.menuItemId === "removebg-apikey") {
-        browser.runtime.openOptionsPage();
+        chrome.runtime.openOptionsPage();
       }
     });
   }
 };
 
-browser.storage.local.get("removebgapikey").then((resp) => {
+chrome.storage.local.get("removebgapikey").then((resp) => {
   const apiKey = resp.removebgapikey;
   createMenuItems(apiKey);
 });
